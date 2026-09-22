@@ -1,16 +1,19 @@
 from pathlib import Path
 from datetime import datetime
-import hashlib, json, re
+import hashlib
+import json
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "data/source/extracted.txt"
+LAYOUT_SRC = ROOT / "data/source/extracted_layout.txt"
+LEGACY_SRC = ROOT / "data/source/extracted.txt"
+SRC = LAYOUT_SRC if LAYOUT_SRC.exists() else LEGACY_SRC
 OUT = ROOT / "data/posts.json"
 META = ROOT / "data/meta.json"
+EXTRACTION_META = ROOT / "data/source/extraction_meta.json"
 
 raw = SRC.read_text(encoding="utf-8", errors="ignore")
 
-# The circulating PDF has a third-party watermark/footer inserted on most pages.
-# Remove only the recurring footer pattern, not ordinary post text.
 footer_patterns = [
     r"\n\d{1,3}\n添加微信1领取\n200\n个互联网创业项目\n\n",
     r"\n\d{1,3}\n添加微信领取\n200\n个互联网创业项目\n\n",
@@ -25,12 +28,13 @@ for pat in footer_patterns:
 header = re.compile(
     r"张\s*一\s*鸣\s*"
     r"(?P<year>20\d{2})\s*-\s*(?P<month>\d{1,2})\s*-\s*"
-    r"(?P<day>\d{1,2})(?P<hour>\d{2})\s*:\s*(?P<minute>\d{2})"
+    r"(?P<day>\d{1,2})\s*(?P<hour>\d{2})\s*:\s*(?P<minute>\d{2})"
 )
 matches = list(header.finditer(text))
 
 source_specs = [
     ("微博浏览器插件", "微博浏览器插件"),
+    ("我爱我家微群", "我爱我家微群"),
     ("微活动-IT龙门阵...", "微活动-IT龙门阵"),
     ("外滩画报daily", "外滩画报 daily"),
     ("手机优酷", "手机优酷"),
@@ -66,8 +70,11 @@ source_specs = [
 ]
 source_specs.sort(key=lambda x: len(x[0]), reverse=True)
 
+CJK = r"\u3400-\u9fff"
+CJK_PUNCT = r"，。！？：；、、“”‘’《》【】（）"
+
+
 def consume_compact_prefix(s: str, target: str):
-    """Consume target from s while ignoring whitespace between target chars."""
     i = 0
     j = 0
     while i < len(s) and j < len(target):
@@ -82,38 +89,83 @@ def consume_compact_prefix(s: str, target: str):
         return None
     return s[i:]
 
+
 def extract_source(segment: str):
     s = segment.lstrip()
     if not s.startswith("来自"):
         return "", s
+
     for compact, display in source_specs:
         rest = consume_compact_prefix(s, "来自" + compact)
         if rest is not None:
             return display, rest.lstrip()
+
     return "", s
 
-def clean_content(s: str):
-    # A page number can land at the beginning of a post after PDF pagination.
-    s = re.sub(r"^\s*\d{1,3}\s*\n(?=\S)", "", s, count=1)
-    s = re.sub(r"\n\d{1,3}\s*$", "", s)
-    # Remove any residual third-party promo watermark if line extraction changed.
-    s = re.sub(r"\s*添加微信\s*1?\s*领取\s*200\s*个互联网创业项目\s*", "", s)
-    # Normalize PDF line-wraps into the single-flow style of a Weibo post.
+
+def normalize_visual_spacing(s: str):
+    lines = [line.strip() for line in s.splitlines() if line.strip()]
+    s = " ".join(lines)
     s = s.replace("\u00a0", " ")
     s = re.sub(r"[ \t\r\f\v]+", " ", s)
-    s = re.sub(r"\s*\n\s*", "", s)
-    s = re.sub(r" {2,}", " ", s)
-    return s.strip()
+
+    cjkish = rf"[{CJK}{CJK_PUNCT}]"
+    s = re.sub(rf"(?<={cjkish}) +(?={cjkish})", "", s)
+    s = re.sub(r" +(?=[，。！？：；、）》】])", "", s)
+    s = re.sub(r"(?<=[《【（]) +", "", s)
+
+    s = re.sub(r"\bO +网页链接\b", "O网页链接", s)
+    s = re.sub(r"@ +(?=[A-Za-z0-9_\-\u3400-\u9fff])", "@", s)
+    s = re.sub(r"# +([^#]+?) +#", r"#\1#", s)
+
+    s = re.sub(r"([.!?])(?=[A-Z])", r"\1 ", s)
+    s = re.sub(r" +(?=[,.;:!?])", "", s)
+
+    # Chinese prose normally does not put a space between a number and Han text.
+    s = re.sub(rf"(?<=\d) +(?=[{CJK}])", "", s)
+    s = re.sub(rf"(?<=[{CJK}]) +(?=\d)", "", s)
+
+    # A few PDF runs encode no geometric word gap. Keep this list small and
+    # auditable instead of guessing broadly.
+    spacing_repairs = {
+        "ofour": "of our",
+        "anddemand": "and demand",
+        "andprofessionalism": "and professionalism",
+        "appESPApplolicious": "appESP Applolicious",
+    }
+    for bad, good in spacing_repairs.items():
+        s = s.replace(bad, good)
+
+    return re.sub(r" {2,}", " ", s).strip()
+
+
+def clean_content(s: str):
+    # Do NOT delete a leading number here. The old rule corrupted
+    # "6岁的时候" into "岁的时候".
+    s = re.sub(
+        r"\s*添加微信\s*1?\s*领取\s*200\s*个互联网创业项目\s*",
+        "",
+        s,
+    )
+    return normalize_visual_spacing(s)
+
 
 posts = []
 for idx, m in enumerate(matches):
     end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
     segment = text[m.end():end]
 
-    y, mo, d, h, mi = map(int, [
-        m.group("year"), m.group("month"), m.group("day"),
-        m.group("hour"), m.group("minute")
-    ])
+    y, mo, d, h, mi = map(
+        int,
+        [
+            m.group("year"),
+            m.group("month"),
+            m.group("day"),
+            m.group("hour"),
+            m.group("minute"),
+        ],
+    )
+
     try:
         dt = datetime(y, mo, d, h, mi)
     except ValueError:
@@ -131,26 +183,34 @@ for idx, m in enumerate(matches):
     flags = []
     if "此微博已被作者删除" in content:
         flags.append("deleted")
-    if "已设置仅展示半年内微博" in content or "正文在公开存档中未能恢复" in content:
+    if (
+        "已设置仅展示半年内微博" in content
+        or "正文在公开存档中未能恢复" in content
+    ):
         flags.append("unavailable")
-    if content.startswith("转发微博") or "//@" in content or content.startswith("//"):
+    if (
+        content.startswith("转发微博")
+        or "//@" in content
+        or content.startswith("//")
+    ):
         flags.append("repost")
 
-    posts.append({
-        "id": digest,
-        "datetime": dt.strftime("%Y-%m-%dT%H:%M:00+08:00"),
-        "date": dt.strftime("%Y-%m-%d"),
-        "time": dt.strftime("%H:%M"),
-        "year": y,
-        "month": mo,
-        "day": d,
-        "source": source,
-        "text": content,
-        "flags": flags,
-        "archiveIndex": idx + 1,
-    })
+    posts.append(
+        {
+            "id": digest,
+            "datetime": dt.strftime("%Y-%m-%dT%H:%M:00+08:00"),
+            "date": dt.strftime("%Y-%m-%d"),
+            "time": dt.strftime("%H:%M"),
+            "year": y,
+            "month": mo,
+            "day": d,
+            "source": source,
+            "text": content,
+            "flags": flags,
+            "archiveIndex": idx + 1,
+        }
+    )
 
-# Keep the source ordering (newest -> oldest), but report duplicate timestamps separately.
 seen = set()
 duplicate_keys = 0
 for p in posts:
@@ -163,29 +223,70 @@ years = {}
 sources = {}
 for p in posts:
     years[str(p["year"])] = years.get(str(p["year"]), 0) + 1
-    sources[p["source"] or "来源未识别"] = sources.get(p["source"] or "来源未识别", 0) + 1
+    sources[p["source"] or "来源未识别"] = (
+        sources.get(p["source"] or "来源未识别", 0) + 1
+    )
 
-OUT.write_text(json.dumps(posts, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-META.write_text(json.dumps({
-    "project": "张一鸣微博档案（非官方复原）",
-    "sourceTitle": "张一鸣微博日记 2286 条",
-    "sourceCompiler": "方建勇",
-    "sourceCompiledDate": "2019-05-25",
-    "sourceFileAlias": "张一鸣微博2886条.pdf",
-    "parsedPosts": len(posts),
-    "dateRange": {
-        "newest": posts[0]["datetime"] if posts else None,
-        "oldest": posts[-1]["datetime"] if posts else None,
-    },
-    "years": years,
-    "sources": dict(sorted(sources.items(), key=lambda kv: (-kv[1], kv[0]))),
-    "removedThirdPartyFooters": removed_footers,
-    "duplicatePostKeys": duplicate_keys,
-    "method": "PDF text layer -> recurring footer removal -> high-confidence 张一鸣+timestamp header parsing",
-    "caveat": "公开整理本标题写作2286条；仅展示能从PDF文本层可靠识别为张一鸣本人时间头的记录。转发关系、原微博ID、图片与互动数并不完整。",
-}, ensure_ascii=False, indent=2), encoding="utf-8")
+OUT.write_text(
+    json.dumps(posts, ensure_ascii=False, separators=(",", ":")),
+    encoding="utf-8",
+)
 
-print(json.dumps(json.loads(META.read_text()), ensure_ascii=False, indent=2))
-print("\nSAMPLES")
-for p in posts[:3] + posts[-3:]:
-    print(p["datetime"], p["source"], p["text"][:140])
+META.write_text(
+    json.dumps(
+        {
+            "project": "张一鸣微博档案（非官方复原）",
+            "sourceTitle": "张一鸣微博日记 2286 条",
+            "sourceCompiler": "方建勇",
+            "sourceCompiledDate": "2019-05-25",
+            "sourceFileAlias": "张一鸣微博2886条.pdf",
+            "parsedPosts": len(posts),
+            "dateRange": {
+                "newest": posts[0]["datetime"] if posts else None,
+                "oldest": posts[-1]["datetime"] if posts else None,
+            },
+            "years": years,
+            "sources": dict(
+                sorted(sources.items(), key=lambda kv: (-kv[1], kv[0]))
+            ),
+            "removedThirdPartyFooters": (
+                json.loads(EXTRACTION_META.read_text()).get("footerBlocksRemoved", 0)
+                if EXTRACTION_META.exists()
+                else removed_footers
+            ),
+            "duplicatePostKeys": duplicate_keys,
+            "extraction": (
+                "coordinate-aware PDF text extraction"
+                if SRC == LAYOUT_SRC
+                else "legacy plain PDF text extraction"
+            ),
+            "method": (
+                "PDF glyph coordinates -> line reconstruction -> page-level "
+                "third-party footer removal -> high-confidence 张一鸣+timestamp parsing"
+            ),
+            "caveat": (
+                "公开整理本标题写作2286条；仅展示能从PDF文本层可靠识别为"
+                "张一鸣本人时间头的记录。转发关系、原微博ID、图片与互动数并不完整。"
+            ),
+        },
+        ensure_ascii=False,
+        indent=2,
+    ),
+    encoding="utf-8",
+)
+
+print(
+    json.dumps(
+        {
+            "source": str(SRC),
+            "posts": len(posts),
+            "range": {
+                "newest": posts[0]["datetime"] if posts else None,
+                "oldest": posts[-1]["datetime"] if posts else None,
+            },
+            "duplicate_keys": duplicate_keys,
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+)

@@ -4,7 +4,7 @@
   "sourceCompiler": "方建勇",
   "sourceCompiledDate": "2019-05-25",
   "sourceFileAlias": "张一鸣微博2886条.pdf",
-  "parsedPosts": 2160,
+  "parsedPosts": 2164,
   "dateRange": {
     "newest": "2016-03-25T15:22:00+08:00",
     "oldest": "2010-04-29T20:28:00+08:00"
@@ -13,15 +13,15 @@
     "2016": 1,
     "2015": 47,
     "2014": 38,
-    "2013": 291,
-    "2012": 618,
-    "2011": 622,
-    "2010": 543
+    "2013": 292,
+    "2012": 619,
+    "2011": 623,
+    "2010": 544
   },
   "sources": {
-    "微博 weibo.com": 1488,
-    "iPhone 客户端": 279,
-    "今日头条": 259,
+    "微博 weibo.com": 1489,
+    "iPhone 客户端": 280,
+    "今日头条": 260,
     "手机微博触屏版": 22,
     "Android 客户端": 19,
     "微博手机版": 16,
@@ -42,6 +42,7 @@
     "外滩画报 daily": 1,
     "微公益": 1,
     "微活动-IT龙门阵": 1,
+    "我爱我家微群": 1,
     "手机优酷": 1,
     "搜狗高速浏览器": 1,
     "新浪博客": 1,
@@ -51,8 +52,9 @@
     "豆瓣 web": 1,
     "豆瓣音乐": 1
   },
-  "removedThirdPartyFooters": 328,
+  "removedThirdPartyFooters": 349,
   "duplicatePostKeys": 1,
-  "method": "PDF text layer -> recurring footer removal -> high-confidence 张一鸣+timestamp header parsing",
+  "extraction": "coordinate-aware PDF text extraction",
+  "method": "PDF glyph coordinates -> line reconstruction -> page-level third-party footer removal -> high-confidence 张一鸣+timestamp parsing",
   "caveat": "公开整理本标题写作2286条；仅展示能从PDF文本层可靠识别为张一鸣本人时间头的记录。转发关系、原微博ID、图片与互动数并不完整。"
 }

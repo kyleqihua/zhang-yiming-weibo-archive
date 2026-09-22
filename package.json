@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "extract": "node scripts/extract_layout.js",
+    "build-data": "npm run extract && python3 scripts/parse_archive.py",
+    "validate": "python3 scripts/validate_archive.py"
   },
   "keywords": [],
   "author": "",
