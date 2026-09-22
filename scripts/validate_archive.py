@@ -27,6 +27,14 @@ develop = at("2015-11-07T12:07")
 assert len(develop) == 1
 assert develop[0]["text"] == "Develop a company as a product."
 
+gates = at("2015-09-24T09:59")
+assert len(gates) == 1
+assert gates[0]["text"].startswith("没敢问手机等产品问题"), gates[0]["text"]
+
+textbook = at("2015-08-23T00:42")
+assert len(textbook) == 1
+assert textbook[0]["text"].startswith("其实知识含量最大的书是教科书"), textbook[0]["text"]
+
 consumption = [p for p in posts if "关于消费" in p["text"]]
 assert len(consumption) >= 2
 

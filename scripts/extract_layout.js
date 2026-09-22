@@ -10,6 +10,7 @@ const metaOutput = path.join(root, "data/source/extraction_meta.json");
 const X_GAP_SPACE_THRESHOLD = 1.3;
 const Y_LINE_TOLERANCE = 0.8;
 let footerBlocksRemoved = 0;
+let pageNumbersRemoved = 0;
 
 function groupIntoLines(items) {
   const groups = [];
@@ -47,23 +48,52 @@ function groupIntoLines(items) {
       previous = item;
     }
 
-    return text.trimEnd();
+    return { y: line.y, text: text.trimEnd() };
   });
 }
 
-function stripThirdPartyFooter(lines) {
+function stripThirdPartyFooter(lines, pageNumber) {
   const out = lines.slice();
 
-  while (out.length && !out[out.length - 1].trim()) out.pop();
+  while (out.length && !out[out.length - 1].text.trim()) out.pop();
 
+  let removedAdBlock = false;
   for (let span = 1; span <= 4 && out.length >= span; span += 1) {
-    const joined = out.slice(-span).join("").replace(/\s+/g, "");
+    const joined = out.slice(-span).map((line) => line.text).join("").replace(/\s+/g, "");
     if (/添加微信1?领取200个互联网创业项目/.test(joined)) {
       out.splice(out.length - span, span);
       footerBlocksRemoved += 1;
-      if (out.length && /^\d{1,3}$/.test(out[out.length - 1].trim())) out.pop();
+      removedAdBlock = true;
       break;
     }
+  }
+
+  // If the ad block was present, the immediately preceding isolated number
+  // is the PDF page number even when its y position varies between pages.
+  if (
+    removedAdBlock &&
+    out.length &&
+    /^\d{1,3}$/.test(out[out.length - 1].text.trim())
+  ) {
+    out.pop();
+    pageNumbersRemoved += 1;
+  }
+
+  // The PDF page number is an isolated number near the physical bottom of
+  // the page. This is the safe discriminator that the old text-only parser
+  // did not have. Never delete a number in the body just because it is at the
+  // beginning of a post (for example the real "6岁的时候").
+  while (out.length) {
+    const tail = out[out.length - 1];
+    if (
+      tail.y < 100 &&
+      tail.text.trim() === String(pageNumber)
+    ) {
+      out.pop();
+      pageNumbersRemoved += 1;
+      continue;
+    }
+    break;
   }
 
   return out;
@@ -86,8 +116,8 @@ async function main() {
         disableCombineTextItems: false
       });
 
-      const lines = stripThirdPartyFooter(groupIntoLines(textContent.items));
-      pages.push(lines.join("\n"));
+      const lines = stripThirdPartyFooter(groupIntoLines(textContent.items), pageNumber);
+      pages.push(lines.map((line) => line.text).join("\n"));
       return "";
     }
   });
@@ -96,6 +126,7 @@ async function main() {
   fs.writeFileSync(metaOutput, JSON.stringify({
     pages: pageNumber,
     footerBlocksRemoved: footerBlocksRemoved,
+    pageNumbersRemoved: pageNumbersRemoved,
     xGapSpaceThreshold: X_GAP_SPACE_THRESHOLD,
     yLineTolerance: Y_LINE_TOLERANCE
   }, null, 2), "utf8");
@@ -103,7 +134,8 @@ async function main() {
     pages: pageNumber,
     output: output,
     bytes: fs.statSync(output).size,
-    footerBlocksRemoved: footerBlocksRemoved
+    footerBlocksRemoved: footerBlocksRemoved,
+    pageNumbersRemoved: pageNumbersRemoved
   }, null, 2));
 }
 
