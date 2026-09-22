@@ -337,8 +337,8 @@
 
   function init() {
     Promise.all([
-      fetch("./data/posts.json"),
-      fetch("./data/meta.json")
+      fetch("./data/posts.json", { cache: "no-store" }),
+      fetch("./data/meta.json", { cache: "no-store" })
     ]).then(function (responses) {
       if (!responses[0].ok || !responses[1].ok) throw new Error("数据文件读取失败");
       return Promise.all([responses[0].json(), responses[1].json()]);
