@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#dceef5">
+  <meta name="description" content="张一鸣早年微博公开存档的非官方阅读复原。">
+  <title>张一鸣的微博｜非官方历史复原</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="./" aria-label="返回首页">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span class="brand-cn">新浪微博</span>
+        <span class="brand-domain">weibo.com</span>
+      </a>
+      <nav class="topnav" aria-label="旧版微博导航复原">
+        <a class="active" href="#feed">首页</a>
+        <a href="#archive">微博</a>
+        <a href="#years">年份</a>
+        <a href="#about">关于复原</a>
+      </nav>
+      <label class="top-search">
+        <span aria-hidden="true">⌕</span>
+        <input id="topSearch" type="search" autocomplete="off" placeholder="搜他的微博">
+      </label>
+    </div>
+  </header>
+
+  <div class="skin" aria-hidden="true">
+    <div class="skin-cloud cloud-a"></div>
+    <div class="skin-cloud cloud-b"></div>
+  </div>
+
+  <main class="page-shell">
+    <section class="profile-cover" aria-labelledby="profileName">
+      <div class="cover-copy">
+        <div class="cover-kicker">非官方历史复原 · 2011 风格</div>
+        <h1 id="profileName">张一鸣</h1>
+        <p>把公开流传的早年微博资料，还原成可以一条条往下刷的时间线。</p>
+      </div>
+      <div class="cover-date" id="coverRange">2010 — 2016</div>
+    </section>
+
+    <div class="columns">
+      <aside class="left-column" aria-label="个人资料">
+        <section class="panel profile-card">
+          <div class="avatar avatar-large" aria-hidden="true">张</div>
+          <div class="profile-name">张一鸣</div>
+          <div class="profile-handle">历史微博档案</div>
+          <div class="profile-stats">
+            <div><strong id="statPosts">—</strong><span>恢复微博</span></div>
+            <div><strong id="statYears">—</strong><span>年份</span></div>
+            <div><strong id="statSources">—</strong><span>来源设备</span></div>
+          </div>
+          <p class="profile-note">这不是张一鸣本人账号，也不是新浪微博官方页面。</p>
+        </section>
+
+        <section class="panel nav-panel">
+          <a class="nav-row active" href="#feed"><span>▣</span>他的微博</a>
+          <button class="nav-row" id="oldestFirstBtn" type="button"><span>↥</span><span id="orderLabel">从最早开始</span></button>
+          <button class="nav-row" id="randomBtn" type="button"><span>⌁</span>随机一条</button>
+          <button class="nav-row" id="clearBtn" type="button"><span>×</span>清除筛选</button>
+        </section>
+
+        <section class="panel archive-note" id="about">
+          <h2>关于这份复原</h2>
+          <p>公开整理本标题为《张一鸣微博日记 2286 条》，方建勇整理于 2019‑05‑25。本站只纳入能从文本层可靠识别出“张一鸣 + 时间”的记录。</p>
+          <p>原微博 ID、图片、视频、评论、转发数和部分转发关系未完整保存，所以这里不会伪造这些字段。</p>
+          <a href="https://www.cgltzk.vip/doc/462/" rel="noreferrer" target="_blank">查看整理本资料页 ↗</a>
+          <a href="https://guozh.net/zhang-yiming-weibo-pdf/" rel="noreferrer" target="_blank">查看另一公开存档说明 ↗</a>
+        </section>
+      </aside>
+
+      <section class="feed-column" id="feed" aria-label="微博时间线">
+        <div class="feed-toolbar">
+          <div class="feed-tabs" role="tablist" aria-label="微博类型">
+            <button class="feed-tab active" data-filter="all" type="button">全部</button>
+            <button class="feed-tab" data-filter="original" type="button">原创</button>
+            <button class="feed-tab" data-filter="repost" type="button">转发</button>
+            <button class="feed-tab" data-filter="unavailable" type="button">存档缺失</button>
+          </div>
+          <div class="result-summary" id="resultSummary">正在载入存档…</div>
+        </div>
+
+        <div class="mobile-search-wrap">
+          <label class="mobile-search">
+            <span aria-hidden="true">⌕</span>
+            <input id="mobileSearch" type="search" autocomplete="off" placeholder="搜索历史微博">
+          </label>
+        </div>
+
+        <div id="pinnedResult" class="pinned-result" hidden></div>
+        <div id="feedList" class="feed-list" aria-live="polite"></div>
+        <button id="loadMoreBtn" class="load-more" type="button" hidden>查看更多微博</button>
+        <div id="emptyState" class="empty-state" hidden>
+          <strong>没有找到</strong>
+          <span>换个关键词或年份试试。</span>
+        </div>
+      </section>
+
+      <aside class="right-column" id="archive" aria-label="档案筛选">
+        <section class="panel years-panel" id="years">
+          <div class="panel-title">微博档案</div>
+          <div id="yearList" class="year-list"></div>
+        </section>
+
+        <section class="panel source-panel">
+          <div class="panel-title">常用发布来源</div>
+          <div id="sourceList" class="source-list"></div>
+        </section>
+
+        <section class="panel source-status">
+          <div class="panel-title">恢复状态</div>
+          <dl>
+            <div><dt>可靠识别</dt><dd id="statusParsed">—</dd></div>
+            <div><dt>存档跨度</dt><dd id="statusRange">—</dd></div>
+            <div><dt>第三方水印</dt><dd id="statusFooters">—</dd></div>
+          </dl>
+          <p>页面风格参考 2011 年前后的新浪微博布局；数据本身保持存档原貌，不补写不存在的信息。</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div>张一鸣微博档案 · 非官方历史阅读复原</div>
+    <div>页面不是新浪微博或字节跳动的官方产品。</div>
+  </footer>
+
+  <template id="postTemplate">
+    <article class="weibo-post">
+      <div class="avatar avatar-small" aria-hidden="true">张</div>
+      <div class="post-body">
+        <div class="post-head">
+          <a class="post-author" href="#feed">张一鸣</a>
+          <span class="archive-badge" title="表示本条来自历史存档，并非官方认证标识">档案</span>
+        </div>
+        <div class="post-text"></div>
+        <div class="post-meta">
+          <a class="post-time" href="#"></a>
+          <span class="post-source"></span>
+        </div>
+        <div class="post-actions" aria-label="旧微博操作区视觉复原">
+          <span title="原始收藏数据未恢复">收藏</span>
+          <span title="原始转发数据未恢复">转发</span>
+          <span title="原始评论数据未恢复">评论</span>
+          <button class="copy-link" type="button">链接</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
