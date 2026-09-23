@@ -39,6 +39,14 @@ assert len(speech) == 1
 assert speech[0]["attachment"]["title"] == "意料之外的大学生活和创业心路"
 assert "意料之外的大学生活和创业心路意料之外" not in speech[0]["text"]
 
+lobster = at("2015-05-07T07:20")
+assert len(lobster) == 1
+assert lobster[0]["text"] == "张嘉佳微博文字很好但书没看过，所以把书和龙虾都加入到了wish list"
+assert lobster[0]["attachment"]["title"] == "张嘉佳&唐宋：十年一觉龙虾梦"
+assert "十几年前，我还是一个文艺青年" not in lobster[0]["text"]
+assert "&amp;" not in lobster[0]["text"]
+assert lobster[0]["attachment"]["url"].startswith("https://www.sohu.com/")
+
 gates = at("2015-09-24T09:59")
 assert len(gates) == 1
 assert gates[0]["text"].startswith("没敢问手机等产品问题"), gates[0]["text"]
@@ -58,6 +66,14 @@ assert not bad_long_runs, bad_long_runs[:20]
 
 assert meta["removedThirdPartyFooters"] >= 300
 assert meta["extraction"] == "coordinate-aware PDF text extraction"
+
+html_entity_re = re.compile(r"&(?:amp|quot|apos|lt|gt|nbsp|#\d+|#x[0-9a-fA-F]+);")
+entity_hits = [
+    (p["datetime"], p["text"])
+    for p in posts
+    if html_entity_re.search(p["text"])
+]
+assert not entity_hits, entity_hits[:10]
 
 print(json.dumps({
     "status": "ok",

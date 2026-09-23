@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 import hashlib
+import html
 import json
 import re
 
@@ -74,6 +75,17 @@ CJK = r"\u3400-\u9fff"
 CJK_PUNCT = r"，。！？：；、、“”‘’《》【】（）"
 
 LONG_ARTICLE_OVERRIDES = {
+    "2015-05-07T07:20:00+08:00": {
+        "text": "张嘉佳微博文字很好但书没看过，所以把书和龙虾都加入到了wish list",
+        "attachment": {
+            "type": "article",
+            "label": "网页文章",
+            "title": "张嘉佳&唐宋：十年一觉龙虾梦",
+            "excerpt": "十几年前，我还是一个文艺青年。严格来讲，应该是文学青年。文学在当时的年轻人中尚属主流艺术……",
+            "url": "https://www.sohu.com/a/13609448_115494",
+            "provenance": "内容镜像：搜狐，2015-05-04，文/蒋政文（笔名“唐宋”）",
+        },
+    },
     "2015-11-17T20:20:00+08:00": {
         "text": '周日在南开大学北京校友活动：11.15 南开发声，我做了一个演讲。在演讲的前几天，我犹豫是做一个客套的"母校演讲" ，还是讲讲真实经历和感受，最后选择了后者。从现场反馈效果不错，龚克校长还邀我回学校分...',
         "attachment": {
@@ -209,6 +221,9 @@ def split_long_article_preview(content: str, dt_iso: str):
 
 
 def clean_content(s: str):
+    # Decode HTML entities leaked from rich-link previews, e.g. &amp; -> &.
+    s = html.unescape(s)
+
     # Do NOT delete a leading number here. The old rule corrupted
     # "6岁的时候" into "岁的时候".
     s = re.sub(
