@@ -73,6 +73,51 @@ source_specs.sort(key=lambda x: len(x[0]), reverse=True)
 CJK = r"\u3400-\u9fff"
 CJK_PUNCT = r"，。！？：；、、“”‘’《》【】（）"
 
+LONG_ARTICLE_OVERRIDES = {
+    "2015-11-17T20:20:00+08:00": {
+        "text": '周日在南开大学北京校友活动：11.15 南开发声，我做了一个演讲。在演讲的前几天，我犹豫是做一个客套的"母校演讲" ，还是讲讲真实经历和感受，最后选择了后者。从现场反馈效果不错，龚克校长还邀我回学校分...',
+        "attachment": {
+            "type": "article",
+            "label": "长微博",
+            "title": "意料之外的大学生活和创业心路",
+            "excerpt": "周日在南开大学北京校友活动：11.15 南开发声，我做了一个演讲。在演讲的前几天，我犹豫是做一个客套的“母校演讲”，还是讲讲真实经历和感受……",
+            "url": "http://t.cn/RUEKuEI",
+            "provenance": "原微博短链接",
+        },
+    },
+    "2015-08-25T21:01:00+08:00": {
+        "text": "「给产品技术人才的建议：不降级不投机，和优秀的人做有挑战的事」这作文是我自己写的。。。有点吃力哈。。但是是真心话，供产品技术人才参考。",
+        "attachment": {
+            "type": "article",
+            "label": "长微博",
+            "title": "给产品技术人才的建议：不降级不投机，和优秀的人做有挑战的事",
+            "excerpt": "最近有点郁闷，又有候选人把我拒绝了。其实拒和被拒经常发生，并不都导致郁闷，但，候选人以这些理由选择别家公司除外……",
+            "url": "http://t.cn/RyvCZQQ",
+            "provenance": "原微博短链接",
+        },
+    },
+    "2014-05-22T21:43:00+08:00": {
+        "attachment": {
+            "type": "article",
+            "label": "长微博",
+            "title": "我的二次创业——Egret Html5游戏引擎",
+            "excerpt": "今年春天因为种种原因，我下决心开始自己人生中的第二次创业。很多关心我的朋友来跟我聊……",
+            "url": "",
+            "provenance": "PDF 中展开的长文预览",
+        },
+    },
+    "2010-09-15T23:51:00+08:00": {
+        "attachment": {
+            "type": "article",
+            "label": "长微博",
+            "title": "互联网/移动互联网小团队创业第二集",
+            "excerpt": "上一集收到了非常多的好评和很好的反馈，谢谢。这个系列是针对小团队白手起家创业……",
+            "url": "",
+            "provenance": "PDF 中展开的长文预览",
+        },
+    },
+}
+
 
 def consume_compact_prefix(s: str, target: str):
     i = 0
@@ -139,6 +184,30 @@ def normalize_visual_spacing(s: str):
     return re.sub(r" {2,}", " ", s).strip()
 
 
+def split_long_article_preview(content: str, dt_iso: str):
+    """
+    The PDF compiler expanded some Sina long-article link previews directly
+    after the microblog text, flattening two UI layers into one string. Keep
+    the microblog body and article preview as separate fields.
+    """
+    override = LONG_ARTICLE_OVERRIDES.get(dt_iso)
+    attachment = None
+
+    if "°" in content:
+        body, _expanded = content.split("°", 1)
+        content = body.strip()
+        if override and override.get("attachment"):
+            attachment = dict(override["attachment"])
+
+    if override:
+        if override.get("text"):
+            content = override["text"]
+        if override.get("attachment"):
+            attachment = dict(override["attachment"])
+
+    return content.strip(), attachment
+
+
 def clean_content(s: str):
     # Do NOT delete a leading number here. The old rule corrupted
     # "6岁的时候" into "岁的时候".
@@ -173,6 +242,8 @@ for idx, m in enumerate(matches):
 
     source, remainder = extract_source(segment)
     content = clean_content(remainder)
+    dt_iso = dt.strftime("%Y-%m-%dT%H:%M:00+08:00")
+    content, attachment = split_long_article_preview(content, dt_iso)
     if not content:
         content = "（该条微博正文在公开存档中未能恢复）"
 
@@ -198,7 +269,7 @@ for idx, m in enumerate(matches):
     posts.append(
         {
             "id": digest,
-            "datetime": dt.strftime("%Y-%m-%dT%H:%M:00+08:00"),
+            "datetime": dt_iso,
             "date": dt.strftime("%Y-%m-%d"),
             "time": dt.strftime("%H:%M"),
             "year": y,
@@ -206,6 +277,7 @@ for idx, m in enumerate(matches):
             "day": d,
             "source": source,
             "text": content,
+            "attachment": attachment,
             "flags": flags,
             "archiveIndex": idx + 1,
         }

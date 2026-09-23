@@ -73,6 +73,23 @@
     var source = $(".post-source", node);
     source.textContent = post.source || "来源未识别";
 
+    var attachment = $(".post-attachment", node);
+    if (post.attachment) {
+      attachment.hidden = false;
+      $(".attachment-kicker", attachment).textContent = post.attachment.label || "链接";
+      var attachmentTitle = $(".attachment-title", attachment);
+      attachmentTitle.textContent = post.attachment.title || "查看链接";
+      if (post.attachment.url) {
+        attachmentTitle.href = post.attachment.url;
+      } else {
+        attachmentTitle.removeAttribute("href");
+        attachmentTitle.removeAttribute("target");
+        attachmentTitle.classList.add("no-link");
+      }
+      $(".attachment-excerpt", attachment).textContent = post.attachment.excerpt || "";
+      $(".attachment-source", attachment).textContent = post.attachment.provenance || "";
+    }
+
     $(".copy-link", node).addEventListener("click", function () {
       var url = new URL(location.href);
       url.hash = "post-" + post.id;

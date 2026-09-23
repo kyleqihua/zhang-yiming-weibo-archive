@@ -31,6 +31,15 @@ button,input{font:inherit}button{color:inherit}a{color:var(--blue);text-decorati
 .weibo-post{position:relative;display:flex;gap:12px;padding:16px 16px 12px;border-bottom:1px solid var(--line);background:#fff}.weibo-post:hover{background:#fffdfa}.weibo-post.flash{animation:flashPost 1.5s ease-out}@keyframes flashPost{0%,40%{background:#fff4c7}100%{background:#fff}}
 .post-body{min-width:0;flex:1}.post-head{display:flex;align-items:center;gap:6px;line-height:18px}.post-author{color:#333;font-weight:700}.post-author:hover{color:var(--orange)}.archive-badge{display:inline-flex;height:15px;align-items:center;padding:0 4px;color:#fff;font-size:9px;line-height:15px;background:#e8a21a;border-radius:2px}
 .post-text{margin-top:5px;color:#333;font-size:14px;line-height:1.62;overflow-wrap:anywhere;white-space:pre-wrap}.post-text a{color:var(--blue)}
+
+.post-attachment{margin-top:10px;padding:10px 12px;border:1px solid #e4e4e4;border-left:3px solid #f0a21a;background:#fafafa;border-radius:2px}
+.attachment-kicker{font-size:10px;color:#b67819;margin-bottom:4px}
+.attachment-title{display:block;color:#333;font-size:13px;font-weight:700;line-height:1.45}
+.attachment-title:hover{color:var(--orange)}
+.attachment-title.no-link{cursor:default;text-decoration:none}
+.attachment-excerpt{margin-top:5px;color:#777;font-size:11px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.attachment-source{margin-top:5px;color:#aaa;font-size:10px}
+
 .post-meta{margin-top:9px;display:flex;flex-wrap:wrap;gap:7px;color:#999;font-size:11px}.post-time{color:#6fa9c8}.post-source:before{content:"来自 ";color:#aaa}
 .post-actions{margin-top:9px;display:flex;justify-content:flex-end;color:#888;font-size:11px}.post-actions span,.post-actions button{position:relative;padding:0 9px}.post-actions span+span:before,.post-actions button:before{content:"";position:absolute;left:0;top:2px;height:11px;border-left:1px solid #ddd}.post-actions button{border:0;background:transparent;color:#6fa9c8;cursor:pointer}
 .pinned-result{border-bottom:1px solid #e2d49c;background:#fffbe8}.pinned-result .weibo-post{background:#fffbe8}.pinned-label{padding:8px 14px 0 78px;font-size:11px;color:#a37b23}
@@ -46,7 +55,7 @@ mark{padding:0 1px;background:#fff0a6;color:inherit;border-radius:1px}
   body{background:#f4f4f4;font-size:14px}.topbar{height:48px}.topbar-inner{width:auto;height:46px;padding:0 12px}.brand{width:auto}.brand-cn{font-size:17px}.brand-domain,.topnav,.top-search{display:none}.skin{display:none}
   .page-shell{width:auto;margin:0 0 24px}.profile-cover{height:auto;min-height:112px;padding:20px 18px 18px;border:0;border-radius:0;align-items:flex-end}.cover-copy{max-width:76%}.cover-kicker{font-size:10px}.profile-cover h1{font-size:24px}.profile-cover p{font-size:12px;line-height:1.5}.cover-date{font-size:15px}
   .columns{display:block;padding:0}.left-column,.right-column{display:none}.feed-column{border:0;border-radius:0;box-shadow:none}.feed-toolbar{position:sticky;top:48px;z-index:20;min-height:43px;padding:0 10px}.feed-tabs{height:42px;overflow-x:auto}.feed-tab{padding:0 9px;white-space:nowrap}.result-summary{font-size:10px;white-space:nowrap}.mobile-search-wrap{display:block}
-  .weibo-post{padding:14px 12px 11px;gap:10px}.avatar-small{width:42px;height:42px;font-size:17px}.post-text{font-size:15px;line-height:1.62;margin-top:4px}.post-meta{margin-top:8px}.post-actions{margin-top:8px}.pinned-label{padding-left:64px}.site-footer{width:auto;padding:16px;margin:0 16px 28px}
+  .weibo-post{padding:14px 12px 11px;gap:10px}.avatar-small{width:42px;height:42px;font-size:17px}.post-text{font-size:15px;line-height:1.62;margin-top:4px}.post-attachment{margin-top:9px;padding:10px}.attachment-title{font-size:14px}.attachment-excerpt{font-size:12px}.post-meta{margin-top:8px}.post-actions{margin-top:8px}.pinned-label{padding-left:64px}.site-footer{width:auto;padding:16px;margin:0 16px 28px}
 }
 @media (max-width:390px){.result-summary{display:none}.cover-date{display:none}.cover-copy{max-width:100%}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}

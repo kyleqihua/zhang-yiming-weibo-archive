@@ -27,6 +27,18 @@ develop = at("2015-11-07T12:07")
 assert len(develop) == 1
 assert develop[0]["text"] == "Develop a company as a product."
 
+article = at("2015-08-25T21:01")
+assert len(article) == 1
+assert article[0]["text"] == "「给产品技术人才的建议：不降级不投机，和优秀的人做有挑战的事」这作文是我自己写的。。。有点吃力哈。。但是是真心话，供产品技术人才参考。"
+assert article[0]["attachment"]["title"] == "给产品技术人才的建议：不降级不投机，和优秀的人做有挑战的事"
+assert article[0]["attachment"]["url"] == "http://t.cn/RyvCZQQ"
+assert "最近有点郁闷" not in article[0]["text"]
+
+speech = at("2015-11-17T20:20")
+assert len(speech) == 1
+assert speech[0]["attachment"]["title"] == "意料之外的大学生活和创业心路"
+assert "意料之外的大学生活和创业心路意料之外" not in speech[0]["text"]
+
 gates = at("2015-09-24T09:59")
 assert len(gates) == 1
 assert gates[0]["text"].startswith("没敢问手机等产品问题"), gates[0]["text"]
